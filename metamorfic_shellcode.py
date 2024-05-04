@@ -283,5 +283,3 @@ def generate_shellcode() :
 print(generate_shellcode())
 
 
-
-
